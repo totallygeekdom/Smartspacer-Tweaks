@@ -14,10 +14,11 @@ import com.kieronquinn.app.smartspacer.repositories.SmartspacerSettingsRepositor
 import com.kieronquinn.app.smartspacer.repositories.SmartspacerSettingsRepository.ExpandedBackground
 import com.kieronquinn.app.smartspacer.repositories.WallpaperRepository
 import com.kieronquinn.app.smartspacer.ui.activities.ExpandedActivity
+import com.google.android.material.color.DynamicColors
 import com.kieronquinn.app.smartspacer.ui.screens.base.BaseOverlay
 import com.kieronquinn.app.smartspacer.utils.extensions.removeStatusNavBackgroundOnPreDraw
 import com.kieronquinn.app.smartspacer.utils.extensions.whenResumed
-import com.kieronquinn.monetcompat.core.MonetCompat
+import com.kieronquinn.app.smartspacer.utils.extensions.DynamicMonet
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
@@ -44,7 +45,7 @@ class SmartspacerOverlay(
     private var isResumed = false
 
     private val monet by lazy {
-        MonetCompat.getInstance()
+        DynamicMonet.getInstance()
     }
 
     private val backgroundMode = settingsRepository.expandedBackground.asFlow()
@@ -59,7 +60,10 @@ class SmartspacerOverlay(
     }
 
     private val backgroundColour by lazy {
-        monet.getBackgroundColor(context, !isDarkText)
+        // Wrap with DynamicColors so Monet tokens are resolved correctly from the
+        // service/overlay context (which doesn't go through Activity.onCreate and
+        // therefore doesn't get DynamicColors applied automatically).
+        monet.getBackgroundColor(DynamicColors.wrapContextIfAvailable(context))
     }
 
     override fun onCreate(bundle: Bundle?) {
@@ -105,9 +109,7 @@ class SmartspacerOverlay(
     override fun onDragProgress(progress: Float) {
         super.onDragProgress(progress)
         updateProgressViews(progress)
-        whenResumed {
-            expandedRepository.onOverlayDragProgressChanged()
-        }
+        expandedRepository.onOverlayDragProgressChanged()
     }
 
     override fun onSaveInstanceState(bundle: Bundle) {
@@ -125,10 +127,9 @@ class SmartspacerOverlay(
                 blurProvider.applyBlurToWindow(window!!, progress)
             }
             ExpandedBackground.SCRIM -> {
-                val backgroundColour = ColorUtils.setAlphaComponent(
-                    Color.BLACK, (127.5 * progress).roundToInt()
-                )
-                binding.root.background = ColorDrawable(backgroundColour)
+                // Same as BLUR but without window blur — the fragment supplies the
+                // 75% tinted surface; the overlay root stays transparent.
+                binding.root.background = null
                 blurProvider.applyBlurToWindow(window!!, 0f)
             }
             ExpandedBackground.SOLID -> {

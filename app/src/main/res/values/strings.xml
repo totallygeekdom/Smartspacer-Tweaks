@@ -733,11 +733,11 @@
     <string name="expanded_permission_grant">Grant</string>
 
     <!-- Expanded Smartspace Settings -->
-    <string name="expanded_settings_title">Expanded Smartspace</string>
-    <string name="expanded_settings_title_short">Expanded</string>
-    <string name="expanded_settings_content">Show Smartspace Targets and Complications in a full screen view, with extra information including widgets, app shortcuts and more</string>
-    <string name="expanded_settings_footer">Expanded Smartspace shows all Smartspace Targets and Complications, as well as information including widgets, app shortcuts and more for supported Targets. It can be opened from the Home Screen, Lock Screen, or an App Shortcut from Smartspacer\'s icon. If you use Discover Killer, Smartspacer can also replace your Google Discover Feed.</string>
-    <string name="expanded_settings_switch">Enable Expanded Smartspace</string>
+    <string name="expanded_settings_title">Pixel Now</string>
+    <string name="expanded_settings_title_short">Pixel Now</string>
+    <string name="expanded_settings_content">Your personal feed — news, widgets, and Smartspace all in one place</string>
+    <string name="expanded_settings_footer">Pixel Now is your personal news feed, built on the same idea as Google Discover but on your terms. Design-wise it takes cues from Discover\'s card-based layout and the iconic pill-shaped camera bar of the Pixel — familiar, but yours to configure. Choose your sources, arrange your content, and see exactly what matters to you.</string>
+    <string name="expanded_settings_switch">Enable Pixel Now</string>
     <string name="expanded_settings_header_search">Search</string>
     <string name="expanded_settings_show_search_box_title">Show Search Box</string>
     <string name="expanded_settings_show_search_box_content">Show a search box at the top of Expanded Smartspace</string>
@@ -746,6 +746,8 @@
     <string name="expanded_settings_search_provider_content_unset">Choose the app to launch when the search box is opened</string>
     <string name="expanded_settings_show_doodle_title">Show Google Doodle</string>
     <string name="expanded_settings_show_doodle_content">Display today\'s Google Doodle at the top of Expanded Smartspace</string>
+    <string name="expanded_settings_doodle_open_google_app_title">Open Google App on tap</string>
+    <string name="expanded_settings_doodle_open_google_app_content">Tap the Google Doodle or wordmark to open the Google app instead of google.com in the browser</string>
     <string name="expanded_settings_header_behaviour">Behaviour</string>
     <string name="expanded_settings_open_mode_home_screen_title">Open from Home Screen</string>
     <string name="expanded_settings_open_mode_home_screen_title_short">Home Screen</string>
@@ -756,6 +758,8 @@
     <string name="expanded_settings_close_when_locked_title">Close When Locked</string>
     <string name="expanded_settings_close_when_locked_content">Exit Expanded Smartspace when the device is locked</string>
     <string name="expanded_settings_header_style">Style</string>
+    <string name="expanded_settings_weather_cookie_title">Show weather cookie</string>
+    <string name="expanded_settings_weather_cookie_content">Display weather as a circular badge in the pill header. When disabled, weather appears as a regular page</string>
     <string name="expanded_settings_background_mode_title">Background</string>
     <string name="expanded_settings_background_mode_content">The background to show behind Expanded Smartspace: %1s</string>
     <string name="expanded_settings_background_mode_blur">Blurred Wallpaper</string>
@@ -772,6 +776,8 @@
     <string name="expanded_settings_hide_add_button_overlay_only">When replacing Google Discover</string>
     <string name="expanded_settings_hide_add_button_when_locked">When locked</string>
     <string name="expanded_settings_hide_add_button_always">Always</string>
+    <string name="expanded_settings_nav_bar_style_title">Nav bar button style</string>
+    <string name="expanded_settings_nav_bar_style_content">%1$s</string>
     <string name="expanded_settings_enable_columns_title">Enable Multi-Column</string>
     <string name="expanded_settings_enable_columns_content">On larger width devices, display Smartspacer Targets, extra content and custom widgets horizontally as well as vertically, where space is available</string>
     <string name="expanded_complications_first_title">Complications First</string>
@@ -1242,5 +1248,29 @@
     <string name="fitness_widget_recommendation_category_label">Health &amp; fitness</string>
     <string name="news_widget_recommendation_category_label">News &amp; magazines</string>
     <string name="others_widget_recommendation_category_label">Suggested for you</string>
+
+    <!-- Expanded view tab bar -->
+    <string name="expanded_menu">More options</string>
+    <string name="expanded_tabs_empty">No widget tabs configured.\nTap ⋮ to set up your first tab.</string>
+    <string name="expanded_tab_settings_title">Widget Tabs</string>
+    <string name="expanded_tab_settings_display_mode_title">Tab button style</string>
+    <string name="expanded_tab_settings_mode_label">Label</string>
+    <string name="expanded_tab_settings_mode_icon">Icon</string>
+    <string name="expanded_tab_settings_mode_icon_label">Icon + Label</string>
+    <string name="expanded_tab_settings_add">Add Tab</string>
+    <string name="expanded_tab_settings_label_hint">Tab label</string>
+    <string name="expanded_tab_settings_pick_widget">Pick widget</string>
+    <string name="expanded_tab_settings_widget_assigned">Widget #%1$d</string>
+    <string name="expanded_tab_settings_no_widgets">No widgets added yet. Add widgets through the main expanded view first.</string>
+    <string name="expanded_tab_settings_add_new_widget">Add New Widget…</string>
+    <string name="expanded_tab_settings_delete">Delete</string>
+    <string name="expanded_tab_settings_saved">Tab configuration saved</string>
+    <string name="expanded_tab_settings_pick_icon">Pick icon</string>
+
+    <!-- Icon picker bottom sheet -->
+    <string name="expanded_tab_icon_picker_title">Pick Icon</string>
+    <string name="expanded_tab_icon_picker_search">Search icons</string>
+    <string name="expanded_tab_icon_picker_clear">Clear</string>
+    <string name="expanded_tab_icon_picker_no_results">No icons found</string>
 
 </resources>

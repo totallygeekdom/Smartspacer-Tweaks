@@ -1,31 +1,392 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!--
+  At-a-Glance style expanded view layout.
+
+  Visual structure:
+    ┌────────────────────────────────────────────┐
+    │  [ Date / Event ]         [ ⋮ ] [ 🌙 61°F ] │  ← outlined pill header card
+    └────────────────────────────────────────────┘
+    ┌────────────────────────────────────────────┐
+    │                                            │
+    │          ReadYou (or any) widget           │  ← ViewFlipper (full-height widget area)
+    │                                            │
+    └────────────────────────────────────────────┘
+    ┌────────────────────────────────────────────┐
+    │  [ Tech ]   [ News ]   [ Science ]         │  ← NavigationBarView (tab switcher)
+    └────────────────────────────────────────────┘
+
+  Notes:
+  - The pill header stroke color = ?attr/colorOutline (visible gold/tan border in screenshots)
+  - The pill background = ?attr/colorSurface
+  - The weather cookie (circular badge) is GONE by default, shown only when a
+    FEATURE_WEATHER target is present in the Smartspacer session.
+  - The ViewFlipper children are inflated programmatically in ExpandedFragment.
+  - The NavigationBarView items are added programmatically from ExpandedTabRepository.
+  - State overlays (loading / disabled / permission) and the unlock bar are preserved.
+-->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/expanded_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground"
+    android:clipChildren="false"
     android:transitionGroup="true">
 
-    <!-- Intentional: Load all items to prevent widget reload where possible -->
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/expanded_nested_scroll"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        app:layout_constraintBottom_toTopOf="@id/expanded_unlock_container"
+    <!-- ═══════════════════════════════════════════════════════════
+         GOOGLE DOODLE HEADER
+         Shown above the pill when expandedShowDoodle is enabled.
+         Left: Google Doodle image (fitStart, height=35dp).
+         Right: ⋮ overflow menu button (34×34dp).
+         GONE by default; toggled in ExpandedFragment.setupDoodleHeader().
+         When GONE, the pill uses layout_goneMarginTop=28dp to preserve
+         its original distance from the content top.
+         ═══════════════════════════════════════════════════════════ -->
+    <LinearLayout
+        android:id="@+id/expanded_doodle_header"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="28dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <com.kieronquinn.app.smartspacer.ui.views.NestedRecyclerView
-            android:id="@+id/expanded_recycler_view"
-            android:layout_width="match_parent"
+        <ImageView
+            android:id="@+id/expanded_doodle_image"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:clipChildren="false"
-            android:paddingBottom="@dimen/expanded_button_unlock_height"
-            tools:listitem="@layout/smartspace_view_template_basic" />
+            android:layout_weight="1"
+            android:scaleType="fitStart"
+            android:importantForAccessibility="no" />
 
-    </androidx.core.widget.NestedScrollView>
+        <!-- Same 14×28dp dot-pill as expanded_header_menu_container.
+             Dots are added programmatically in reapplyColors(). -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/expanded_doodle_menu_container"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            app:cardCornerRadius="100dp"
+            app:cardElevation="0dp"
+            app:strokeWidth="0dp"
+            app:cardBackgroundColor="@android:color/transparent">
 
+            <LinearLayout
+                android:id="@+id/expanded_doodle_menu"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:contentDescription="@string/expanded_menu" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </LinearLayout>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         AT-A-GLANCE STYLE PILL HEADER
+         26dp below the system status bar (root is padded by the
+         status-bar inset).
+         Left: Smartspacer target pages (ViewPager2, starts at the
+               pill left edge and ends at the cookie left edge).
+         Right: 10-sided weather cookie (SquircleFrameLayout).
+         Far-right of the pill: ⋮ menu button (floats on top).
+         ═══════════════════════════════════════════════════════════ -->
+    <com.kieronquinn.app.smartspacer.ui.views.SwipeDetectingCardView
+        android:id="@+id/expanded_header_pill"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        app:cardBackgroundColor="?attr/colorSecondaryContainer"
+        app:cardCornerRadius="100dp"
+        app:cardElevation="0dp"
+        app:strokeWidth="0dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/expanded_doodle_header"
+        app:layout_goneMarginTop="32dp">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="90dp"
+            android:clipChildren="false">
+
+            <!-- ViewPager2: clipChildren=false (forwarded by VP2 to its internal RecyclerView)
+                 lets pages overflow VP2's bounds so they slide visually behind the weather
+                 cookie and menu container during swipe transitions. The page transformer
+                 ensures adjacent pages at rest are pushed past the pill's right edge so
+                 they are never visible through the semi-transparent cookie. -->
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/expanded_header_target"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:clipChildren="false"
+                android:orientation="horizontal"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/expanded_header_menu_container"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- Dots overlaid at exactly top=71dp (Figma 60dp × 1.1803 ≈ 71dp, h=19dp).
+                 They sit above the VP2 in z-order (declared after it in XML). -->
+            <LinearLayout
+                android:id="@+id/expanded_header_dots"
+                android:layout_width="0dp"
+                android:layout_height="19dp"
+                android:layout_marginTop="71dp"
+                android:orientation="horizontal"
+                android:gravity="center"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <!-- ⋮ menu container — 14×28dp vertical pill (100dp corner radius caps at
+                 7dp on the 14dp short side → fully rounded top/bottom, straight sides).
+                 Three 5×5dp dot Views with 2dp gaps are added programmatically in
+                 reapplyColors().  Same colour as the pill so it blends in. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/expanded_header_menu_container"
+                android:layout_width="14dp"
+                android:layout_height="28dp"
+                app:cardCornerRadius="100dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="?attr/colorSecondaryContainer"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/expanded_header_weather_container"
+                app:layout_constraintTop_toTopOf="parent">
+
+                <LinearLayout
+                    android:id="@+id/expanded_header_menu"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Weather cookie container — same 90×90dp circle.  GONE when no weather
+                 data is available so the menu container shifts to the right edge. -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/expanded_header_weather_container"
+                android:layout_width="90dp"
+                android:layout_height="90dp"
+                app:cardCornerRadius="100dp"
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp"
+                app:cardBackgroundColor="?attr/colorSecondaryContainer"
+                android:visibility="gone"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:visibility="visible">
+
+                <!-- Squircle fills the circle minus 8dp on every side, aspect ratio preserved
+                     because both axes use match_parent with equal margins. -->
+                <com.kieronquinn.app.smartspacer.ui.views.SquircleFrameLayout
+                    android:id="@+id/expanded_header_weather"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_margin="8dp"
+                    android:background="?attr/colorPrimaryContainer">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:padding="8dp">
+
+                        <ImageView
+                            android:id="@+id/expanded_header_weather_icon"
+                            android:layout_width="29dp"
+                            android:layout_height="29dp"
+                            android:layout_marginBottom="2dp"
+                            android:importantForAccessibility="no"
+                            app:layout_constraintBottom_toTopOf="@id/expanded_header_weather_temp"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            app:layout_constraintVertical_chainStyle="packed"
+                            tools:src="@drawable/ic_complications" />
+
+                        <TextView
+                            android:id="@+id/expanded_header_weather_temp"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:textSize="13sp"
+                            android:textColor="?attr/colorOnPrimaryContainer"
+                            app:layout_constraintBottom_toBottomOf="parent"
+                            app:layout_constraintEnd_toEndOf="parent"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@id/expanded_header_weather_icon"
+                            tools:text="61°F" />
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                </com.kieronquinn.app.smartspacer.ui.views.SquircleFrameLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.kieronquinn.app.smartspacer.ui.views.SwipeDetectingCardView>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         MAIN WIDGET AREA
+         ViewFlipper: one FrameLayout child per configured tab.
+         Children and their AppWidgetHostViews are attached at runtime.
+         Background is transparent so the window Monet colorSurface
+         (= ReadYou widget background) shows through seamlessly.
+         ═══════════════════════════════════════════════════════════ -->
+    <ViewFlipper
+        android:id="@+id/expanded_widget_flipper"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:measureAllChildren="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/expanded_header_pill" />
+
+    <!-- Shown in place of the flipper when no tabs have been configured yet. -->
+    <TextView
+        android:id="@+id/expanded_empty_label"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingStart="32dp"
+        android:paddingEnd="32dp"
+        android:text="@string/expanded_tabs_empty"
+        android:textAppearance="?attr/textAppearanceBodyLarge"
+        android:textColor="?attr/colorOnSurfaceVariant"
+        android:visibility="gone"
+        app:layout_constraintBottom_toTopOf="@id/expanded_tab_navigation"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/expanded_header_pill"
+        tools:visibility="visible" />
+
+    <!-- ═══════════════════════════════════════════════════════════
+         BOTTOM TAB NAVIGATION — Material You horizontal floating pill bar
+         Layout: [ scrollable pill of nav items ] [7dp gap] [ FAB ]
+         Container is a fixed screen-72dp wide (36dp margins each side).
+         Pill and FAB are a packed chain with bias=0.5 so they centre
+         themselves when few tabs, and the pill expands to fill the
+         available width (scrolling internally) when tabs overflow.
+         ═══════════════════════════════════════════════════════════ -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/expanded_tab_navigation"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="16dp"
+        android:clipChildren="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <!-- Scrollable pill: wraps content but is capped at container_width - FAB.
+             bias=0.5 centres the pill+FAB chain when content is narrow;
+             when content overflows the cap the HorizontalScrollView scrolls. -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/expanded_tab_scroll_pill"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:cardBackgroundColor="?attr/colorSurfaceContainer"
+            app:cardCornerRadius="100dp"
+            app:cardElevation="6dp"
+            app:strokeWidth="8dp"
+            app:strokeColor="?attr/colorSurfaceContainerHigh"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/expanded_tab_open_app"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintWidth_default="wrap"
+            app:layout_constraintHorizontal_chainStyle="packed"
+            app:layout_constraintHorizontal_bias="0.5">
+            <!-- Nav items injected here at runtime by ExpandedFragment -->
+            <HorizontalScrollView
+                android:id="@+id/expanded_tab_scroll_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:overScrollMode="never"
+                android:clipChildren="false"
+                android:clipToPadding="false"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp">
+
+                <LinearLayout
+                    android:id="@+id/expanded_tab_buttons"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:clipChildren="false" />
+
+            </HorizontalScrollView>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Circle FAB — 56×56 dp, anchored to chain end.
+             ShapeAppearance.Material3.Corner.Medium gives rounded corners. -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/expanded_tab_open_app"
+            style="@style/Widget.Material3.Button.IconButton.Filled.Tonal"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginStart="8dp"
+            android:elevation="6dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:insetLeft="0dp"
+            android:insetRight="0dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            app:icon="@drawable/ic_open"
+            app:iconSize="24dp"
+            app:iconPadding="0dp"
+            app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium"
+            app:layout_constraintStart_toEndOf="@id/expanded_tab_scroll_pill"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- ═══════════════════════════════════════════════════════════
+         LOADING STATE
+         ═══════════════════════════════════════════════════════════ -->
+    <ImageView
+        android:id="@+id/expanded_loading"
+        android:layout_width="240dp"
+        android:layout_height="240dp"
+        android:src="@drawable/avd_foreground_splash"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DISABLED STATE (preserved from original)
+         ═══════════════════════════════════════════════════════════ -->
     <ImageView
         android:id="@+id/expanded_disabled_icon"
         android:layout_width="48dp"
@@ -45,8 +406,8 @@
         android:paddingStart="@dimen/margin_16"
         android:paddingEnd="@dimen/margin_16"
         android:text="@string/expanded_disabled"
-        android:textAppearance="@style/TextAppearance.AppCompat.Medium.Smartspacer"
-        android:textColor="?android:textColorPrimary"
+        android:textAppearance="?attr/textAppearanceTitleMedium"
+        android:textColor="?attr/colorOnSurface"
         app:layout_constraintBottom_toTopOf="@id/expanded_disabled_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -58,36 +419,30 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/margin_16"
         android:text="@string/expanded_disabled_settings"
-        android:textAppearance="@style/TextAppearance.AppCompat.Small.Smartspacer.Medium"
-        android:textColor="?android:textColorPrimaryInverse"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/expanded_disabled_title" />
 
-    <ImageView
-        android:id="@+id/expanded_loading"
-        android:layout_width="240dp"
-        android:layout_height="240dp"
-        android:src="@drawable/avd_foreground_splash"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <androidx.constraintlayout.widget.Group
         android:id="@+id/expanded_disabled"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         app:constraint_referenced_ids="expanded_disabled_icon,expanded_disabled_title,expanded_disabled_button" />
 
+    <!-- ═══════════════════════════════════════════════════════════
+         PERMISSION REQUIRED STATE
+         Card now uses ?attr/colorSurfaceContainer instead of white.
+         ═══════════════════════════════════════════════════════════ -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/expanded_permission"
         style="@style/Widget.Material3.CardView.Filled.Smartspacer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="@dimen/margin_16"
-        app:cardBackgroundColor="?android:colorControlHighlight"
+        android:visibility="gone"
+        app:cardBackgroundColor="?attr/colorSurfaceContainer"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -110,8 +465,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/margin_16"
                 android:text="@string/expanded_permission_title"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small.Smartspacer.Medium"
-                android:textColor="?android:textColorPrimary"
+                android:textAppearance="?attr/textAppearanceTitleSmall"
+                android:textColor="?attr/colorOnSurface"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/expanded_permission_icon"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -123,8 +478,8 @@
                 android:layout_marginStart="@dimen/margin_16"
                 android:layout_marginTop="4dp"
                 android:text="@string/expanded_permission_content"
-                android:textAppearance="@style/TextAppearance.AppCompat.Small.Smartspacer"
-                android:textColor="?android:textColorPrimary"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@id/expanded_permission_icon"
                 app:layout_constraintTop_toBottomOf="@id/expanded_permission_title" />
@@ -133,6 +488,9 @@
 
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- ═══════════════════════════════════════════════════════════
+         KEYGUARD UNLOCK BAR (preserved from original)
+         ═══════════════════════════════════════════════════════════ -->
     <FrameLayout
         android:id="@+id/expanded_unlock_container"
         android:layout_width="match_parent"
@@ -149,7 +507,7 @@
             app:icon="@drawable/ic_expanded_unlock"
             app:iconGravity="textStart"
             app:iconPadding="0dp"
-            app:iconTint="?android:textColorPrimary" />
+            app:iconTint="?attr/colorOnSurface" />
 
     </FrameLayout>
 

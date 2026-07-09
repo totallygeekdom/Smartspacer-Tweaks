@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Single destination item inside the expanded-view floating nav bar.
+  Icon is rendered as a TextView using the Material Symbols font so glyph
+  bounds are always correct (ImageView requires a full layout pass after
+  setImageDrawable on a previously-GONE view, causing a blank first frame).
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/nav_item_container"
+    android:layout_width="wrap_content"
+    android:layout_height="48dp"
+    android:layout_marginEnd="4dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp">
+
+    <!-- Clipping container for the icon. Width is animated 0↔natural during tab
+         switches so the icon is revealed/hidden by clipping rather than alpha.
+         GONE when unselected or no codepoint assigned; the inner TextView stays
+         VISIBLE at all times so it renders immediately when the container opens. -->
+    <FrameLayout
+        android:id="@+id/nav_item_icon_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:clipChildren="true"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/nav_item_icon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="24dp"
+            android:includeFontPadding="false"
+            android:singleLine="true"
+            android:importantForAccessibility="no" />
+
+    </FrameLayout>
+
+    <!-- Label: always visible except in ICON_ONLY mode. -->
+    <TextView
+        android:id="@+id/nav_item_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?attr/textAppearanceLabelMedium"
+        android:textSize="14sp"
+        android:letterSpacing="0.04"
+        android:singleLine="true"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+</LinearLayout>

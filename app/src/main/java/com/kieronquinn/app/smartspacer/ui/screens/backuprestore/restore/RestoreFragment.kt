@@ -22,8 +22,8 @@ import com.kieronquinn.app.smartspacer.ui.screens.backuprestore.restore.RestoreV
 import com.kieronquinn.app.smartspacer.utils.extensions.onApplyInsets
 import com.kieronquinn.app.smartspacer.utils.extensions.onClicked
 import com.kieronquinn.app.smartspacer.utils.extensions.whenResumed
-import com.kieronquinn.monetcompat.extensions.views.applyMonet
-import com.kieronquinn.monetcompat.extensions.views.overrideRippleColor
+import com.kieronquinn.app.smartspacer.utils.extensions.applyMonet
+import com.kieronquinn.app.smartspacer.utils.extensions.overrideRippleColor
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class RestoreFragment : BoundFragment<FragmentRestoreBinding>(FragmentRestoreBinding::inflate), BackAvailable, HideBottomNavigation {
@@ -183,7 +183,7 @@ class RestoreFragment : BoundFragment<FragmentRestoreBinding>(FragmentRestoreBin
             SwitchSetting(
                 shouldRestoreSettings,
                 getString(R.string.restore_restore_settings_title),
-                if(hasExpandedCustomWidgets){
+                if(hasSettings){
                     getText(R.string.restore_restore_settings_content)
                 }else{
                     getString(R.string.restore_restore_settings_content_empty)

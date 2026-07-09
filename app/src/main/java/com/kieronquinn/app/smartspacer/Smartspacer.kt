@@ -61,6 +61,8 @@ import com.kieronquinn.app.smartspacer.repositories.DownloadRepository
 import com.kieronquinn.app.smartspacer.repositories.DownloadRepositoryImpl
 import com.kieronquinn.app.smartspacer.repositories.ExpandedRepository
 import com.kieronquinn.app.smartspacer.repositories.ExpandedRepositoryImpl
+import com.kieronquinn.app.smartspacer.repositories.ExpandedTabRepository
+import com.kieronquinn.app.smartspacer.repositories.ExpandedTabRepositoryImpl
 import com.kieronquinn.app.smartspacer.repositories.FlashlightRepository
 import com.kieronquinn.app.smartspacer.repositories.FlashlightRepositoryImpl
 import com.kieronquinn.app.smartspacer.repositories.GeofenceRepository
@@ -85,6 +87,8 @@ import com.kieronquinn.app.smartspacer.repositories.RecentTasksRepository
 import com.kieronquinn.app.smartspacer.repositories.RecentTasksRepositoryImpl
 import com.kieronquinn.app.smartspacer.repositories.RequirementsRepository
 import com.kieronquinn.app.smartspacer.repositories.RequirementsRepositoryImpl
+import com.kieronquinn.app.smartspacer.repositories.ReadYouRepository
+import com.kieronquinn.app.smartspacer.repositories.ReadYouRepositoryImpl
 import com.kieronquinn.app.smartspacer.repositories.SearchRepository
 import com.kieronquinn.app.smartspacer.repositories.SearchRepositoryImpl
 import com.kieronquinn.app.smartspacer.repositories.ShizukuServiceRepository
@@ -297,7 +301,6 @@ import com.kieronquinn.app.smartspacer.ui.screens.update.UpdateViewModel
 import com.kieronquinn.app.smartspacer.ui.screens.update.UpdateViewModelImpl
 import com.kieronquinn.app.smartspacer.utils.extensions.gsonExclusionStrategy
 import com.kieronquinn.app.smartspacer.utils.gson.LocalTimeAdapter
-import com.kieronquinn.monetcompat.core.MonetCompat
 import io.noties.markwon.AbstractMarkwonPlugin
 import io.noties.markwon.Markwon
 import io.noties.markwon.core.MarkwonTheme
@@ -348,6 +351,8 @@ class Smartspacer: Application(), Configuration.Provider {
         single { SmartspaceManager(get()) }
         single<AppWidgetRepository>(createdAtStart = true) { AppWidgetRepositoryImpl(get(), get(), get(), get(), get()) }
         single<ExpandedRepository> { ExpandedRepositoryImpl(get(), get(), get(), get(), get()) }
+        single<ExpandedTabRepository> { ExpandedTabRepositoryImpl(get(), get()) }
+        single<ReadYouRepository> { ReadYouRepositoryImpl(get()) }
         single<SmartspacerSettingsRepository> { SmartspacerSettingsRepositoryImpl(get()) }
         single<ShizukuServiceRepository> { ShizukuServiceRepositoryImpl(get(), get()) }
         single<SystemSmartspaceRepository>(createdAtStart = true) { SystemSmartspaceRepositoryImpl(get(), get(), get(), get(), get()) }
@@ -392,7 +397,7 @@ class Smartspacer: Application(), Configuration.Provider {
         single<PluginRepository> { PluginRepositoryImpl(get(), get(), get(), get()) }
         single<DownloadRepository> { DownloadRepositoryImpl(get()) }
         single<UpdateRepository> { UpdateRepositoryImpl(get()) }
-        single<BackupRepository> { BackupRepositoryImpl(get(), get(), get(), get(), get(), get(), get()) }
+        single<BackupRepository> { BackupRepositoryImpl(get(), get(), get(), get(), get(), get(), get(), get()) }
         single<DigitalWellbeingRepository> { DigitalWellbeingRepositoryImpl(get()) }
         single<CalendarRepository>(createdAtStart = true) { CalendarRepositoryImpl(get(), get()) }
         single<GmailRepository>(createdAtStart = true) { GmailRepositoryImpl(get(), get()) }
@@ -473,7 +478,6 @@ class Smartspacer: Application(), Configuration.Provider {
             get(),
             get(),
             get(),
-            get(),
             get()
         ) }
         viewModel<ExpandedWidgetOptionsBottomSheetViewModel> { ExpandedWidgetOptionsBottomSheetViewModelImpl(get(), get(), get()) }
@@ -501,7 +505,7 @@ class Smartspacer: Application(), Configuration.Provider {
         viewModel<RestoreComplicationsViewModel> { RestoreComplicationsViewModelImpl(get(), get(), get(), get(), get(), get(), get()) }
         viewModel<RestoreRequirementsViewModel> { RestoreRequirementsViewModelImpl(get(), get(), get(), get()) }
         viewModel<RestoreWidgetsViewModel> { RestoreWidgetsViewModelImpl(get(), get()) }
-        viewModel<RestoreSettingsViewModel> { RestoreSettingsViewModelImpl(get(), get()) }
+        viewModel<RestoreSettingsViewModel> { RestoreSettingsViewModelImpl(get(), get(), get(), get()) }
         viewModel<CalendarTargetConfigurationViewModel> { CalendarTargetConfigurationViewModelImpl(get(), get(), get()) }
         viewModel<DefaultTargetConfigurationViewModel> { DefaultTargetConfigurationViewModelImpl(get(), get(), get()) }
         viewModel<GmailComplicationConfigurationViewModel> { GmailComplicationConfigurationViewModelImpl(get(), get(), get()) }
@@ -552,7 +556,6 @@ class Smartspacer: Application(), Configuration.Provider {
         super.onCreate()
         if(isSafeMode()) return
         DynamicColors.applyToActivitiesIfAvailable(this)
-        setupMonet()
     }
 
     private fun createGson(): Gson {
@@ -580,15 +583,6 @@ class Smartspacer: Application(), Configuration.Provider {
                     }
                 }
             )).build()
-    }
-
-    private fun setupMonet(){
-        val settings = get<SmartspacerSettingsRepository>()
-        MonetCompat.wallpaperColorPicker = {
-            val selectedColor = settings.monetColor.getSync()
-            if(selectedColor != Integer.MAX_VALUE && it?.contains(selectedColor) == true) selectedColor
-            else it?.firstOrNull()
-        }
     }
 
     private fun isSafeMode(): Boolean {

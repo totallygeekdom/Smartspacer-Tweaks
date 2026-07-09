@@ -19,6 +19,7 @@ import com.kieronquinn.app.smartspacer.repositories.SmartspacerSettingsRepositor
 import com.kieronquinn.app.smartspacer.sdk.model.SmartspaceTarget
 import com.kieronquinn.app.smartspacer.sdk.model.expanded.ExpandedState.Shortcuts.Shortcut
 import com.kieronquinn.app.smartspacer.sdk.utils.sendSafely
+import com.kieronquinn.app.smartspacer.ui.screens.expanded.ExpandedSession
 import com.kieronquinn.app.smartspacer.ui.screens.expanded.ExpandedSession.State
 import com.kieronquinn.app.smartspacer.utils.extensions.allowBackground
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +32,7 @@ abstract class ExpandedViewModel: ViewModel() {
     abstract val state: StateFlow<State>
     abstract val overlayDrag: Flow<Unit>
     abstract val exitBus: Flow<Boolean>
+    abstract val rawPageTargets: StateFlow<List<SmartspaceTarget>>
 
     abstract fun setup(isOverlay: Boolean)
     abstract fun onResume()
@@ -81,6 +83,7 @@ class ExpandedViewModelImpl(
     override val overlayDrag = expandedRepository.overlayDragProgressChanged.map {}
     override val state = session.state
     override val exitBus = session.exitBus
+    override val rawPageTargets = session.rawPageTargets
 
     override fun setup(isOverlay: Boolean) = session.setup(isOverlay)
 
